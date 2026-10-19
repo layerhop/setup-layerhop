@@ -1,0 +1,60 @@
+name: Setup LayerHop mock API
+description: Start a local mock LayerHop API (layerhop dev) for integration tests and export LAYERHOP_API_URL.
+author: LayerHop
+branding:
+  icon: repeat
+  color: blue
+
+inputs:
+  port:
+    description: Port for the mock API.
+    default: "8787"
+  cli-version:
+    description: Version of @layerhop/cli to run with npx (needs a release that has `layerhop dev`).
+    default: latest
+  cli:
+    description: Run this command instead of `npx @layerhop/cli@<cli-version>` (e.g. `node packages/cli/dist/index.js`).
+    default: ""
+  fill-after:
+    description: Seconds between reporting a transaction and its final state (filled, refunded or failed).
+    default: "1"
+  webhook-url:
+    description: Send signed order webhooks to this URL (e.g. your app under test).
+    default: ""
+  webhook-secret:
+    description: Signing secret for webhooks (whsec_...). A random one is generated and exported as LAYERHOP_WEBHOOK_SECRET when empty.
+    default: ""
+  fork:
+    description: Also start Anvil forks of EVM chains (needs Foundry, e.g. foundry-rs/foundry-toolchain).
+    default: "false"
+  fork-chains:
+    description: Comma-separated chains to fork when `fork` is true.
+    default: base,arbitrum
+  timeout:
+    description: Seconds to wait for the API to answer /v1/health.
+    default: "60"
+
+outputs:
+  api-url:
+    description: Base URL of the mock API (also exported as LAYERHOP_API_URL).
+    value: ${{ steps.start.outputs.api-url }}
+  webhook-secret:
+    description: Webhook signing secret in use (also exported as LAYERHOP_WEBHOOK_SECRET; masked in logs).
+    value: ${{ steps.start.outputs.webhook-secret }}
+
+runs:
+  using: composite
+  steps:
+    - id: start
+      shell: bash
+      run: bash "${{ github.action_path }}/start.sh"
+      env:
+        LH_PORT: ${{ inputs.port }}
+        LH_CLI_VERSION: ${{ inputs.cli-version }}
+        LH_CLI: ${{ inputs.cli }}
+        LH_FILL_AFTER: ${{ inputs.fill-after }}
+        LH_WEBHOOK_URL: ${{ inputs.webhook-url }}
+        LH_WEBHOOK_SECRET: ${{ inputs.webhook-secret }}
+        LH_FORK: ${{ inputs.fork }}
+        LH_FORK_CHAINS: ${{ inputs.fork-chains }}
+        LH_TIMEOUT: ${{ inputs.timeout }}
